@@ -1,4 +1,3 @@
-```markdown
 # 🤖 Gemini Hacker Terminal
 
 Giao diện terminal phong cách hacker cho Google Gemini AI – chạy trên **Termux** (Android), **Windows**, **Linux**, **macOS**.
@@ -19,26 +18,35 @@ Giao diện terminal phong cách hacker cho Google Gemini AI – chạy trên **
 
 ## 📱 Cài đặt trên Termux (Android)
 
-```bash
 # 1. Cập nhật gói và cài đặt Python, Git
+```
 pkg update && pkg upgrade -y
+```
+```
 pkg install python git -y
-
+```
 # 2. Clone dự án
+```
 git clone https://github.com/your-username/gemini-hacker.git
+```
+```
 cd gemini-hacker
-
+```
 # 3. Cài đặt thư viện requests
+```
 pip install requests
-
+```
 # 4. Thiết lập API key (thay AIzaSy... bằng key thật)
+```
 export GEMINI_API_KEY='AIzaSy...'
-
+```
 # (Tuỳ chọn) Lưu key vĩnh viễn
+```
 echo "export GEMINI_API_KEY='AIzaSy...'" >> ~/.bashrc
 source ~/.bashrc
-
+```
 # 5. Chạy chương trình
+```
 python gemini.py
 ```
 
