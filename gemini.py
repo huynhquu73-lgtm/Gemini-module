@@ -4,6 +4,7 @@ import sys
 import time
 import json
 import requests
+from datetime import datetime
 
 # ------------------- CẤU HÌNH MÀU -------------------
 GREEN = "\033[92m"
@@ -18,10 +19,9 @@ API_KEY = os.environ.get("GEMINI_API_KEY")
 if not API_KEY:
     print(f"{RED}{BOLD}⚠️ LỖI: Chưa thiết lập biến môi trường GEMINI_API_KEY{RESET}")
     print(f"{YELLOW}👉 Hãy chạy: export GEMINI_API_KEY='your_key_here'{RESET}")
-    print(f"👉 Hoặc tạo file .env theo hướng dẫn trong README{RESET}")
     sys.exit(1)
 
-# ------------------- CẤU HÌNH MODEL -------------------
+# ------------------- CẤU HÌNH -------------------
 AVAILABLE_MODELS = {
     "1": "gemini-2.0-flash-exp",
     "2": "gemini-1.5-pro",
@@ -29,10 +29,10 @@ AVAILABLE_MODELS = {
 }
 DEFAULT_MODEL = "gemini-2.0-flash-exp"
 MODEL = DEFAULT_MODEL
-HISTORY_FILE = "conversation_history.json"
+HISTORY_FILE = "conversation_history.txt"   # Đã đổi sang .txt
 
-# ------------------- LỊCH SỬ HỘI THOẠI -------------------
-conversation_history = []  # format Gemini API
+# ------------------- LỊCH SỬ (dạng list các dict role+text) -------------------
+conversation_history = []  # format [{"role":"user","text":"..."}, {"role":"model","text":"..."}]
 
 # ------------------- HÀM TIỆN ÍCH -------------------
 def clear_screen():
@@ -56,25 +56,57 @@ def print_banner():
     print(f"{DIM}    [Ctrl+C] to interrupt{RESET}\n")
 
 def save_history_to_file():
-    """Lưu lịch sử hội thoại ra file JSON"""
+    """Lưu lịch sử dạng text dễ đọc"""
     try:
         with open(HISTORY_FILE, "w", encoding="utf-8") as f:
-            json.dump(conversation_history, f, ensure_ascii=False, indent=2)
+            f.write(f"# Gemini Conversation History\n# Last saved: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write(f"# Model: {MODEL}\n\n")
+            for msg in conversation_history:
+                role = "User" if msg["role"] == "user" else "Gemini"
+                f.write(f"{role}: {msg['text']}\n\n")
+            f.write("--- End of conversation ---\n")
         return True
     except Exception as e:
         print(f"{RED}Lỗi lưu lịch sử: {e}{RESET}")
         return False
 
 def load_history_from_file():
-    """Tải lịch sử từ file JSON (nếu có)"""
+    """Tải lịch sử từ file .txt (định dạng: User: ...\nGemini: ...\n\n)"""
     global conversation_history
+    conversation_history = []
+    if not os.path.exists(HISTORY_FILE):
+        print(f"{DIM}Không tìm thấy file lịch sử cũ. Bắt đầu hội thoại mới.{RESET}")
+        return
+
     try:
-        if os.path.exists(HISTORY_FILE):
-            with open(HISTORY_FILE, "r", encoding="utf-8") as f:
-                conversation_history = json.load(f)
-            print(f"{GREEN}✓ Đã tải {len(conversation_history)//2} lượt hội thoại từ {HISTORY_FILE}{RESET}")
-        else:
-            print(f"{DIM}Không tìm thấy file lịch sử cũ. Bắt đầu hội thoại mới.{RESET}")
+        with open(HISTORY_FILE, "r", encoding="utf-8") as f:
+            content = f.read()
+        # Tách các dòng bắt đầu bằng "User: " hoặc "Gemini: "
+        lines = content.split('\n')
+        current_role = None
+        current_text = []
+        for line in lines:
+            if line.startswith("User: "):
+                # Lưu message trước đó nếu có
+                if current_role and current_text:
+                    conversation_history.append({"role": current_role, "text": " ".join(current_text).strip()})
+                current_role = "user"
+                current_text = [line[6:].strip()]
+            elif line.startswith("Gemini: "):
+                if current_role and current_text:
+                    conversation_history.append({"role": current_role, "text": " ".join(current_text).strip()})
+                current_role = "model"
+                current_text = [line[8:].strip()]
+            elif line.startswith("#") or line.startswith("---"):
+                continue
+            else:
+                if current_role and line.strip():
+                    current_text.append(line.strip())
+        # Thêm message cuối
+        if current_role and current_text:
+            conversation_history.append({"role": current_role, "text": " ".join(current_text).strip()})
+        
+        print(f"{GREEN}✓ Đã tải {len(conversation_history)//2} lượt hội thoại từ {HISTORY_FILE}{RESET}")
     except Exception as e:
         print(f"{RED}Lỗi tải lịch sử: {e}{RESET}")
         conversation_history = []
@@ -82,16 +114,25 @@ def load_history_from_file():
 def build_url():
     return f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent?key={API_KEY}"
 
-def send_prompt_stream(prompt):
-    """Gửi prompt với streaming, trả về (full_answer, tokens_info, latency)"""
-    global conversation_history
-    conversation_history.append({"role": "user", "parts": [{"text": prompt}]})
+def convert_history_to_gemini_format():
+    """Chuyển conversation_history (role, text) sang format Gemini API (role, parts)"""
+    gemini_msgs = []
+    for msg in conversation_history:
+        gemini_msgs.append({
+            "role": msg["role"],
+            "parts": [{"text": msg["text"]}]
+        })
+    return gemini_msgs
 
+def send_prompt_stream(prompt):
+    global conversation_history
+    # Thêm user message
+    conversation_history.append({"role": "user", "text": prompt})
+    gemini_payload = convert_history_to_gemini_format()
     url = build_url()
     headers = {'Content-Type': 'application/json'}
-    payload = {"contents": conversation_history}
-    # Thêm streaming
-    url += "&alt=sse"  # Server-Sent Events
+    payload = {"contents": gemini_payload}
+    url += "&alt=sse"
 
     start_time = time.time()
     full_answer = ""
@@ -102,10 +143,9 @@ def send_prompt_stream(prompt):
             if resp.status_code != 200:
                 error_data = resp.json()
                 err_msg = error_data.get('error', {}).get('message', 'Unknown error')
-                conversation_history.pop()
+                conversation_history.pop()  # xóa user message vừa thêm
                 return None, f"API Error {resp.status_code}: {err_msg}", 0
 
-            # Đọc từng dòng SSE
             for line in resp.iter_lines(decode_unicode=True):
                 if line and line.startswith("data: "):
                     data_str = line[6:]
@@ -117,7 +157,6 @@ def send_prompt_stream(prompt):
                             text_part = chunk['candidates'][0].get('content', {}).get('parts', [{}])[0].get('text', '')
                             if text_part:
                                 full_answer += text_part
-                                # In real-time nếu muốn (tắt typewriter sau)
                                 sys.stdout.write(text_part)
                                 sys.stdout.flush()
                         if 'usageMetadata' in chunk:
@@ -131,18 +170,19 @@ def send_prompt_stream(prompt):
 
     latency = time.time() - start_time
     if full_answer:
-        conversation_history.append({"role": "model", "parts": [{"text": full_answer}]})
+        conversation_history.append({"role": "model", "text": full_answer})
         return full_answer, tokens_info, latency
     else:
         conversation_history.pop()
         return None, "No response from model", latency
 
 def send_prompt_normal(prompt):
-    """Phiên bản không streaming (dùng nếu stream lỗi)"""
-    conversation_history.append({"role": "user", "parts": [{"text": prompt}]})
+    global conversation_history
+    conversation_history.append({"role": "user", "text": prompt})
+    gemini_payload = convert_history_to_gemini_format()
     url = build_url()
     headers = {'Content-Type': 'application/json'}
-    payload = {"contents": conversation_history}
+    payload = {"contents": gemini_payload}
     start_time = time.time()
     try:
         resp = requests.post(url, headers=headers, json=payload, timeout=30)
@@ -155,7 +195,7 @@ def send_prompt_normal(prompt):
             answer = data['candidates'][0]['content']['parts'][0]['text']
             usage = data.get('usageMetadata', {})
             tokens_info = f"Tokens: prompt={usage.get('promptTokenCount',0)} | answer={usage.get('candidatesTokenCount',0)} | total={usage.get('totalTokenCount',0)}"
-            conversation_history.append({"role": "model", "parts": [{"text": answer}]})
+            conversation_history.append({"role": "model", "text": answer})
             return answer, tokens_info, latency
         else:
             conversation_history.pop()
@@ -165,11 +205,9 @@ def send_prompt_normal(prompt):
         return None, f"Error: {e}", 0
 
 def send_prompt(prompt, use_stream=True):
-    """Wrapper: thử stream trước, nếu lỗi thì fallback normal"""
     if use_stream:
         answer, info, latency = send_prompt_stream(prompt)
-        if answer is None and "not support" in info.lower():
-            # Nếu model không hỗ trợ stream, thử normal
+        if answer is None and info and "not support" in info.lower():
             return send_prompt_normal(prompt)
         return answer, info, latency
     else:
@@ -184,22 +222,35 @@ def show_help():
     help_text = f"""
 {BOLD}📖 CÁC LỆNH KHẢ DỤNG:{RESET}
   {GREEN}/clear{RESET}          - Xóa lịch sử hội thoại hiện tại
-  {GREEN}/save{RESET}           - Lưu lịch sử hiện tại vào file {HISTORY_FILE}
+  {GREEN}/save{RESET}           - Lưu lịch sử hiện tại vào file {HISTORY_FILE} (txt)
   {GREEN}/load{RESET}           - Tải lịch sử từ file (ghi đè)
   {GREEN}/model{RESET}          - Xem model đang dùng
   {GREEN}/model <số>{RESET}     - Đổi model: 1=Flash 2.0, 2=Pro 1.5, 3=Flash 1.5
   {GREEN}/history{RESET}        - Hiển thị số lượt hội thoại
+  {GREEN}/export{RESET}         - Xuất lịch sử ra file markdown (Gemini_export.md)
   {GREEN}/exit{RESET}           - Thoát (tự động lưu lịch sử)
   {GREEN}/help{RESET}           - Hiện bảng này
     """
     print(help_text)
 
+def export_markdown():
+    """Xuất lịch sử ra file markdown đẹp"""
+    filename = f"Gemini_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+    try:
+        with open(filename, "w", encoding="utf-8") as f:
+            f.write(f"# Gemini Conversation\n**Model:** {MODEL}\n**Exported:** {datetime.now()}\n\n")
+            for msg in conversation_history:
+                role = "**User**" if msg["role"] == "user" else "**Gemini**"
+                f.write(f"{role}:\n{msg['text']}\n\n---\n\n")
+        print(f"{GREEN}✓ Đã xuất lịch sử ra file {filename}{RESET}")
+    except Exception as e:
+        print(f"{RED}Lỗi xuất file: {e}{RESET}")
+
 # ------------------- CHƯƠNG TRÌNH CHÍNH -------------------
 def main():
     clear_screen()
     print_banner()
-    # Tự động load lịch sử cũ nếu có
-    load_history_from_file()
+    load_history_from_file()   # tự động load file .txt nếu có
 
     while True:
         try:
@@ -207,7 +258,6 @@ def main():
             if not user_input:
                 continue
 
-            # Xử lý lệnh
             cmd = user_input.lower()
             if cmd in ['exit', 'thoát', 'quit']:
                 if save_history_to_file():
@@ -233,6 +283,10 @@ def main():
                 print(f"{DIM}Số tin nhắn trong lịch sử: {len(conversation_history)} (={len(conversation_history)//2} lượt hỏi-đáp){RESET}")
                 continue
 
+            if cmd == '/export':
+                export_markdown()
+                continue
+
             if cmd == '/help':
                 show_help()
                 continue
@@ -251,21 +305,14 @@ def main():
                         print(f"{RED}Model không hợp lệ. Các lựa chọn: 1,2,3{RESET}")
                 continue
 
-            # Gửi prompt bình thường (có stream)
+            # Gửi prompt bình thường
             print(f"\r{DIM}{GREEN}[>] Đang gửi...{RESET}", end="")
             sys.stdout.flush()
             answer, info, latency = send_prompt(user_input, use_stream=True)
             print("\r" + " " * 40 + "\r", end="")
 
             if answer:
-                # Nếu đã stream thì không cần typewriter nữa (vì đã in real-time)
-                # Nhưng để giữ phong cách, nếu không có stream (fallback) thì dùng typewriter
-                if not info:  # nếu info rỗng tức là đã dùng stream? Thực tế stream đã in rồi
-                    pass
-                else:
-                    # Fallback normal: in ra với typewriter
-                    print(f"\n{GREEN}{BOLD}[AI] >{RESET} ")
-                    typewriter(answer, delay=0.01)
+                # Vì stream đã in real-time rồi, không cần typewriter nữa
                 if info:
                     print(f"{DIM}{info} | ⏱️ {latency:.2f}s{RESET}")
                 else:
