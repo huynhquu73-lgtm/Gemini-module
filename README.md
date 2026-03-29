@@ -1,8 +1,7 @@
-
 ```markdown
 # 🤖 Gemini Hacker Terminal
 
-Giao diện terminal phong cách hacker cho Google Gemini AI, chạy được trên **Termux** (Android), **Windows**, **Linux**, **macOS**.
+Giao diện terminal phong cách hacker cho Google Gemini AI – chạy trên **Termux** (Android), **Windows**, **Linux**, **macOS**.
 
 ## ✨ Tính năng
 - Banner ASCII ma trận xanh lục
@@ -11,61 +10,63 @@ Giao diện terminal phong cách hacker cho Google Gemini AI, chạy được tr
 - Prompt `[Đức Nhân@Gemini]>>`
 - Tự động xoá màn hình khi khởi động
 
+## 📦 Yêu cầu chung
+- Python 3.7+
+- Git
+- API key Gemini (lấy miễn phí tại [Google AI Studio](https://aistudio.google.com/app/apikey))
+
 ---
 
-## 📦 Cài đặt
-
-### 📱 Termux (Android)
+## 📱 Cài đặt trên Termux (Android)
 
 ```bash
+# 1. Cập nhật gói và cài đặt Python, Git
 pkg update && pkg upgrade -y
 pkg install python git -y
-mkdir -p ~/gemini_hacker
-cd ~/gemini_hacker
-echo "requests" > requirements.txt
-pip install -r requirements.txt
-```
 
-Sau đó tạo các file gemini.py, texture.txt (xem nội dung ở cuối README).
+# 2. Clone dự án
+git clone https://github.com/your-username/gemini-hacker.git
+cd gemini-hacker
 
-```bash
-export GEMINI_API_KEY='AIzaSy...'   # thay key thật
+# 3. Cài đặt thư viện requests
+pip install requests
+
+# 4. Thiết lập API key (thay AIzaSy... bằng key thật)
+export GEMINI_API_KEY='AIzaSy...'
+
+# (Tuỳ chọn) Lưu key vĩnh viễn
+echo "export GEMINI_API_KEY='AIzaSy...'" >> ~/.bashrc
+source ~/.bashrc
+
+# 5. Chạy chương trình
 python gemini.py
 ```
 
 ---
 
-🪟 Windows (Command Prompt)
+🪟 Cài đặt trên Windows (Command Prompt hoặc PowerShell)
 
-Tạo thư mục dự án
+Bước 1: Cài đặt Git và Python
+
+· Tải và cài Git từ git-scm.com
+· Tải Python từ python.org (nhớ chọn Add Python to PATH)
+
+Bước 2: Mở Command Prompt (cmd) và chạy
 
 ```cmd
 cd %USERPROFILE%
-mkdir gemini_hacker
-cd gemini_hacker
-```
+git clone https://github.com/your-username/gemini-hacker.git
+cd gemini-hacker
 
-Tạo file requirements.txt
-
-```cmd
-echo requests > requirements.txt
-```
-
-Cài đặt thư viện
-
-```cmd
 pip install requests
-```
 
-Thiết lập API key (tạm thời)
-
-```cmd
 set GEMINI_API_KEY=AIzaSy...
 ```
 
-Để lưu vĩnh viễn: Mở System Properties → Environment Variables → thêm biến GEMINI_API_KEY với giá trị key của bạn.
+Để lưu key vĩnh viễn trên Windows:
+Mở System Properties → Environment Variables → thêm biến GEMINI_API_KEY với giá trị key.
 
-Chạy chương trình
+Bước 3: Chạy chương trình
 
 ```cmd
 python gemini.py
@@ -73,65 +74,64 @@ python gemini.py
 
 ---
 
-🐧 Linux (Ubuntu/Debian, Fedora, Arch...)
-
-1. Cài đặt Python & pip
+🐧 Cài đặt trên Linux (Ubuntu/Debian, Fedora, Arch...)
 
 ```bash
+# 1. Cài đặt Python, Git và pip (nếu chưa có)
 # Ubuntu/Debian
-sudo apt update && sudo apt install python3 python3-pip -y
+sudo apt update && sudo apt install python3 python3-pip git -y
 
 # Fedora
-sudo dnf install python3 python3-pip -y
+sudo dnf install python3 python3-pip git -y
 
 # Arch
-sudo pacman -S python python-pip
-```
+sudo pacman -S python python-pip git
 
-2. Tạo thư mục dự án
+# 2. Clone dự án
+git clone https://github.com/your-username/gemini-hacker.git
+cd gemini-hacker
 
-```bash
-mkdir -p ~/gemini_hacker
-cd ~/gemini_hacker
-```
-
-3. Tạo các file cần thiết (xem nội dung ở cuối README)
-
-4. Cài đặt thư viện
-
-```bash
+# 3. Cài đặt thư viện
 pip3 install requests
-```
 
-5. Thiết lập API key
-
-```bash
+# 4. Thiết lập API key
 export GEMINI_API_KEY='AIzaSy...'
-```
 
-Để lưu vĩnh viễn, thêm vào ~/.bashrc hoặc ~/.zshrc:
-
-```bash
+# (Tuỳ chọn) Lưu key vĩnh viễn
 echo "export GEMINI_API_KEY='AIzaSy...'" >> ~/.bashrc
 source ~/.bashrc
-```
 
-6. Chạy chương trình
-
-```bash
+# 5. Chạy chương trình
 python3 gemini.py
 ```
 
 ---
 
-📄 Nội dung các file cần tạo
+🍎 Cài đặt trên macOS
 
-requirements.txt
+```bash
+# 1. Cài đặt Homebrew (nếu chưa có)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
-```txt
-requests
+# 2. Cài đặt Python, Git
+brew install python git
+
+# 3. Clone dự án
+git clone https://github.com/your-username/gemini-hacker.git
+cd gemini-hacker
+
+# 4. Cài đặt requests
+pip3 install requests
+
+# 5. Thiết lập API key
+export GEMINI_API_KEY='AIzaSy...'
+
+# (Tuỳ chọn) Lưu key vĩnh viễn
+echo "export GEMINI_API_KEY='AIzaSy...'" >> ~/.zshrc
+source ~/.zshrc
+
+# 6. Chạy chương trình
+python3 gemini.py
 ```
 
-texture.txt
-
-```text
+---
