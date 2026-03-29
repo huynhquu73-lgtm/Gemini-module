@@ -250,82 +250,88 @@ def export_markdown():
 def main():
     clear_screen()
     print_banner()
-    load_history_from_file()   # tự động load file .txt nếu có
+        load_history_from_file()   # tự động load file .txt nếu có
 
-    while True:
-        try:
-            user_input = input(f"{GREEN}{BOLD}[Đức Nhân@Gemini]>> {RESET}").strip()
-            if not user_input:
-                continue
+    try:
+        while True:
+            try:
+                user_input = input(f"{GREEN}{BOLD}[Đức Nhân@Gemini]>> {RESET}").strip()
+                if not user_input:
+                    continue
 
-            cmd = user_input.lower()
-            if cmd in ['exit', 'thoát', 'quit']:
-                if save_history_to_file():
-                    print(f"{GREEN}✓ Đã lưu lịch sử vào {HISTORY_FILE}{RESET}")
-                print(f"\n{YELLOW}[SYSTEM] Shutting down...{RESET}")
-                time.sleep(0.5)
-                break
+                cmd = user_input.lower()
+                if cmd in ['exit', 'thoát', 'quit']:
+                    if save_history_to_file():
+                        print(f"{GREEN}✓ Đã lưu lịch sử vào {HISTORY_FILE}{RESET}")
+                    print(f"\n{YELLOW}[SYSTEM] Shutting down...{RESET}")
+                    time.sleep(0.5)
+                    break
 
-            if cmd == '/clear':
-                clear_history()
-                continue
+                if cmd == '/clear':
+                    clear_history()
+                    continue
 
-            if cmd == '/save':
-                if save_history_to_file():
-                    print(f"{GREEN}✓ Đã lưu {len(conversation_history)//2} lượt hội thoại.{RESET}")
-                continue
+                if cmd == '/save':
+                    if save_history_to_file():
+                        print(f"{GREEN}✓ Đã lưu {len(conversation_history)//2} lượt hội thoại.{RESET}")
+                    continue
 
-            if cmd == '/load':
-                load_history_from_file()
-                continue
+                if cmd == '/load':
+                    load_history_from_file()
+                    continue
 
-            if cmd == '/history':
-                print(f"{DIM}Số tin nhắn trong lịch sử: {len(conversation_history)} (={len(conversation_history)//2} lượt hỏi-đáp){RESET}")
-                continue
+                if cmd == '/history':
+                    print(f"{DIM}Số tin nhắn trong lịch sử: {len(conversation_history)} (={len(conversation_history)//2} lượt hỏi-đáp){RESET}")
+                    continue
 
-            if cmd == '/export':
-                export_markdown()
-                continue
+                if cmd == '/export':
+                    export_markdown()
+                    continue
 
-            if cmd == '/help':
-                show_help()
-                continue
+                if cmd == '/help':
+                    show_help()
+                    continue
 
-            if cmd.startswith('/model'):
-                parts = user_input.split()
-                if len(parts) == 1:
-                    print(f"{GREEN}Model hiện tại: {MODEL}{RESET}")
-                else:
-                    choice = parts[1]
-                    if choice in AVAILABLE_MODELS:
-                        global MODEL
-                        MODEL = AVAILABLE_MODELS[choice]
-                        print(f"{GREEN}✓ Đã chuyển sang model: {MODEL}{RESET}")
+                if cmd.startswith('/model'):
+                    parts = user_input.split()
+                    if len(parts) == 1:
+                        print(f"{GREEN}Model hiện tại: {MODEL}{RESET}")
                     else:
-                        print(f"{RED}Model không hợp lệ. Các lựa chọn: 1,2,3{RESET}")
-                continue
+                        choice = parts[1]
+                        if choice in AVAILABLE_MODELS:
+                            global MODEL
+                            MODEL = AVAILABLE_MODELS[choice]
+                            print(f"{GREEN}✓ Đã chuyển sang model: {MODEL}{RESET}")
+                        else:
+                            print(f"{RED}Model không hợp lệ. Các lựa chọn: 1,2,3{RESET}")
+                    continue
 
-            # Gửi prompt bình thường
-            print(f"\r{DIM}{GREEN}[>] Đang gửi...{RESET}", end="")
-            sys.stdout.flush()
-            answer, info, latency = send_prompt(user_input, use_stream=True)
-            print("\r" + " " * 40 + "\r", end="")
+                # Gửi prompt bình thường
+                print(f"\r{DIM}{GREEN}[>] Đang gửi...{RESET}", end="")
+                sys.stdout.flush()
+                answer, info, latency = send_prompt(user_input, use_stream=True)
+                print("\r" + " " * 40 + "\r", end="")
 
-            if answer:
-                # Vì stream đã in real-time rồi, không cần typewriter nữa
-                if info:
-                    print(f"{DIM}{info} | ⏱️ {latency:.2f}s{RESET}")
+                if answer:
+                    # Vì stream đã in real-time rồi, không cần typewriter nữa
+                    if info:
+                        print(f"{DIM}{info} | ⏱️ {latency:.2f}s{RESET}")
+                    else:
+                        print(f"{DIM}⏱️ {latency:.2f}s{RESET}")
                 else:
-                    print(f"{DIM}⏱️ {latency:.2f}s{RESET}")
-            else:
-                print(f"\n{RED}{BOLD}[ERROR] {info}{RESET}")
+                    print(f"\n{RED}{BOLD}[ERROR] {info}{RESET}")
 
-        except KeyboardInterrupt:
-            print(f"\n\n{YELLOW}[SYSTEM] Interrupted. Lưu lịch sử trước khi thoát...{RESET}")
-            save_history_to_file()
-            break
-        except Exception as e:
-            print(f"\n{RED}Unexpected error: {e}{RESET}")
+            except KeyboardInterrupt:
+                print(f"\n\n{YELLOW}[SYSTEM] Interrupted. Lưu lịch sử trước khi thoát...{RESET}")
+                save_history_to_file()
+                break
+            except Exception as e:
+                print(f"\n{RED}Unexpected error: {e}{RESET}")
+    finally:
+        # Đảm bảo lưu lịch sử khi thoát khỏi vòng lặp (dù là break hay lỗi)
+        if save_history_to_file():
+            print(f"{GREEN}✓ Đã tự động lưu lịch sử vào {HISTORY_FILE} khi thoát{RESET}")
+        time.sleep(0.5)
 
 if __name__ == "__main__":
     main()
