@@ -84,7 +84,8 @@ def load_history_from_file():
         conversation_history = []
 
 def build_url():
-    return f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent?key={API_KEY}"
+    # FIX: đổi v1beta -> v1 (model gemini-1.5-flash hỗ trợ trong v1)
+    return f"https://generativelanguage.googleapis.com/v1/models/{MODEL}:generateContent?key={API_KEY}"
 
 def convert_history_to_gemini_format():
     return [{"role": msg["role"], "parts": [{"text": msg["text"]}]} for msg in conversation_history]
@@ -93,9 +94,9 @@ def send_prompt_stream(prompt):
     global conversation_history
     conversation_history.append({"role": "user", "text": prompt})
     gemini_payload = convert_history_to_gemini_format()
-    url = build_url() + "&alt=sse"
-    headers = {'Content-Type': 'application/json'}
-    payload = {"contents": gemini_payload}
+    url = build_url()   # FIX: bỏ &alt=sse
+    headers = {'Content-Type': 'application/json', 'Accept': 'text/event-stream'}  # FIX: thêm header stream
+    payload = {"contents": gemini_payload, "stream": True}   # FIX: thêm stream=True
     start = time.time()
     full_answer, tokens_info = "", ""
     try:
