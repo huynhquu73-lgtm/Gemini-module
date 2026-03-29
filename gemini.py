@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # ───────────────────────────────────────────────────────────
-#  GEMINI-CLI  –  FIXED for Gemini 2.0+
+#  GEMINI-CLI  –  FIXED for Gemini 2.5 (quota optimized)
 # ───────────────────────────────────────────────────────────
 import os, sys, time, json, requests
 from datetime import datetime
@@ -9,13 +9,13 @@ from datetime import datetime
 GREEN = "\033[92m"; RED = "\033[91m"; YELLOW = "\033[93m"
 BOLD = "\033[1m"; RESET = "\033[0m"; DIM = "\033[2m"
 
-#  CẤU HÌNH – ĐÃ ĐỔI SANG MODEL 2.0+
+#  CẤU HÌNH – DÙNG FLASH-LITE ĐỂ CÓ QUOTA CAO NHẤT
 API_KEY          = "AIzaSyDAz-MEPWSgxS0pHhyjbllcmm5LdC5mG90"
-DEFAULT_MODEL    = "gemini-2.0-flash"
+DEFAULT_MODEL    = "gemini-2.5-flash-lite"
 AVAILABLE_MODELS = {
-    "1": "gemini-2.0-flash",
-    "2": "gemini-2.5-pro",
-    "3": "gemini-2.0-flash-lite"
+    "1": "gemini-2.5-flash-lite",   # 1000 requests/ngày
+    "2": "gemini-2.5-flash",         # ~250 requests/ngày
+    "3": "gemini-2.5-pro"            # ~100 requests/ngày
 }
 MODEL            = DEFAULT_MODEL
 HISTORY_FILE     = "conversation_history.txt"
@@ -34,8 +34,8 @@ def print_banner():
             print(f"{GREEN}{BOLD}{f.read()}{RESET}")
     except FileNotFoundError:
         print(f"{RED}{BOLD}⚠️ Không tìm thấy texture.txt{RESET}")
-    print(f"{DIM}    model: {MODEL} | /help for commands | type 'exit' to quit{RESET}")
-    print(f"{DIM}    [Ctrl+C] to interrupt{RESET}\n")
+    print(f"{DIM}    model: {MODEL} (quota: 1000 req/ngày) | /help | 'exit' to quit{RESET}")
+    print(f"{DIM}    quota reset: 16:00 hàng ngày{RESET}\n")
 
 def save_history_to_file():
     try:
@@ -179,7 +179,7 @@ def show_help():
   {GREEN}/save{RESET}           - Lưu lịch sử hiện tại vào file {HISTORY_FILE} (txt)
   {GREEN}/load{RESET}           - Tải lịch sử từ file (ghi đè)
   {GREEN}/model{RESET}          - Xem model đang dùng
-  {GREEN}/model <số>{RESET}     - Đổi model: 1=Flash 2.0, 2=Pro 2.5, 3=Flash Lite 2.0
+  {GREEN}/model <số>{RESET}     - Đổi model: 1=Flash-Lite(1000/ngày), 2=Flash(250/ngày), 3=Pro(100/ngày)
   {GREEN}/history{RESET}        - Hiển thị số lượt hội thoại
   {GREEN}/export{RESET}         - Xuất lịch sử ra file markdown (Gemini_export.md)
   {GREEN}/exit{RESET}           - Thoát (tự động lưu lịch sử)
@@ -214,8 +214,8 @@ def main():
                 cmd = user_input.lower()
                 if cmd in ['exit', 'thoát', 'quit']:
                     if save_history_to_file():
-                        print(f"{GREEN}✓ Đã lưu lịch sử vào {HISTORY_FILE}{RESET}")
-                    print(f"\n{YELLOW}[SYSTEM] Tạm biệt!{RESET}")
+                        print(f"{GREEN}✓ Đã lưu lịch sử xem sex vào {HISTORY_FILE}{RESET}")
+                    print(f"\n{YELLOW}[SYSTEM] Cút mẹ mày đi con chó!{RESET}")
                     time.sleep(0.5); break
 
                 if cmd == '/clear':
@@ -227,7 +227,7 @@ def main():
                 if cmd == '/load':
                     load_history_from_file(); continue
                 if cmd == '/history':
-                    print(f"{DIM}Số tin nhắn trong lịch sử: {len(conversation_history)} (={len(conversation_history)//2} lượt hỏi-đáp){RESET}")
+                    print(f"{DIM}Số tin nhắn chat sex trong lịch sử: {len(conversation_history)} (={len(conversation_history)//2} lượt hỏi-đáp){RESET}")
                     continue
                 if cmd == '/export':
                     export_markdown(); continue
@@ -246,7 +246,7 @@ def main():
                             print(f"{RED}Model không hợp lệ. Các lựa chọn: 1,2,3{RESET}")
                     continue
 
-                print(f"\r{DIM}{GREEN}[>] Đang gọi Gemini...{RESET}", end="")
+                print(f"\r{DIM}{GREEN}[>] Bố bảo con này...{RESET}", end="")
                 sys.stdout.flush()
                 answer, info, latency = send_prompt(user_input, use_stream=True)
                 print("\r" + " " * 40 + "\r", end="")
@@ -259,13 +259,13 @@ def main():
                 else:
                     print(f"\n{RED}{BOLD}[ERROR] {info}{RESET}")
             except KeyboardInterrupt:
-                print(f"\n\n{YELLOW}[SYSTEM] Interrupted. Lưu lịch sử trước khi thoát...{RESET}")
+                print(f"\n\n{YELLOW}[SYSTEM] Interrupted. Lưu lịch sử  xem sex của mày trước khi thoát...{RESET}")
                 save_history_to_file(); break
             except Exception as e:
                 print(f"\n{RED}Unexpected error: {e}{RESET}")
     finally:
         if save_history_to_file():
-            print(f"{GREEN}✓ Đã tự động lưu lịch sử vào {HISTORY_FILE} khi thoát{RESET}")
+            print(f"{GREEN}✓ Đã tự động lưu lịch sử xem sex vào {HISTORY_FILE} khi thoát{RESET}")
         time.sleep(0.5)
 
 if __name__ == "__main__":
