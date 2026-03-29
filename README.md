@@ -27,10 +27,10 @@ pkg install python git -y
 ```
 # 2. Clone dự án
 ```
-git clone https://github.com/your-username/gemini-hacker.git
+git clone https://github.com/your-username/Gemini-module.git
 ```
 ```
-cd gemini-hacker
+cd Gemini-module
 ```
 # 3. Cài đặt thư viện requests
 ```
@@ -63,8 +63,8 @@ Bước 2: Mở Command Prompt (cmd) và chạy
 
 ```cmd
 cd %USERPROFILE%
-git clone https://github.com/your-username/gemini-hacker.git
-cd gemini-hacker
+git clone https://github.com/your-username/Gemini-module.git
+cd Gemini-module
 
 pip install requests
 
@@ -96,8 +96,8 @@ sudo dnf install python3 python3-pip git -y
 sudo pacman -S python python-pip git
 
 # 2. Clone dự án
-git clone https://github.com/your-username/gemini-hacker.git
-cd gemini-hacker
+git clone https://github.com/your-username/Gemini-module.git
+cd Gemini-module
 
 # 3. Cài đặt thư viện
 pip3 install requests
@@ -125,7 +125,7 @@ python3 gemini.py
 brew install python git
 
 # 3. Clone dự án
-git clone https://github.com/your-username/gemini-hacker.git
+git clone https://github.com/your-username/Gemini-module.git
 cd gemini-hacker
 
 # 4. Cài đặt requests
