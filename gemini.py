@@ -15,9 +15,6 @@ RESET = "\033[0m"
 DIM = "\033[2m"
 
 # ------------------- CHỌN API KEY -------------------
-# LƯU Ý: Đoạn lấy API key từ os.environ.get("GEMINI_API_KEY") đã bị lược bỏ 
-# để thay bằng menu chọn trực tiếp này.
-# 👇 BẠN HÃY THAY THẾ CÁC CHUỖI 'YOUR_API_KEY_X' DƯỚI ĐÂY BẰNG API KEY THẬT CỦA BẠN 👇
 API_KEYS = {
     "1": "AIzaSyDJvrzMm0sCdpb9EKMQSkl5z6vVXg_8oiI",
     "2": "AIzaSyAIRCAEyHnhamfcA2Z_9wv9O6xaE1slMh4",
@@ -48,10 +45,10 @@ AVAILABLE_MODELS = {
 }
 DEFAULT_MODEL = "gemini-2.0-flash-exp"
 MODEL = DEFAULT_MODEL
-HISTORY_FILE = "conversation_history.txt"   # Đã đổi sang .txt
+HISTORY_FILE = "conversation_history.txt"
 
-# ------------------- LỊCH SỬ (dạng list các dict role+text) -------------------
-conversation_history = []  # format [{"role":"user","text":"..."}, {"role":"model","text":"..."}]
+# ------------------- LỊCH SỬ -------------------
+conversation_history = []
 
 # ------------------- HÀM TIỆN ÍCH -------------------
 def clear_screen():
@@ -75,7 +72,6 @@ def print_banner():
     print(f"{DIM}    [Ctrl+C] to interrupt{RESET}\n")
 
 def save_history_to_file():
-    """Lưu lịch sử dạng text dễ đọc"""
     try:
         with open(HISTORY_FILE, "w", encoding="utf-8") as f:
             f.write(f"# Gemini Conversation History\n# Last saved: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
@@ -90,7 +86,6 @@ def save_history_to_file():
         return False
 
 def load_history_from_file():
-    """Tải lịch sử từ file .txt (định dạng: User: ...\nGemini: ...\n\n)"""
     global conversation_history
     conversation_history = []
     if not os.path.exists(HISTORY_FILE):
@@ -100,13 +95,11 @@ def load_history_from_file():
     try:
         with open(HISTORY_FILE, "r", encoding="utf-8") as f:
             content = f.read()
-        # Tách các dòng bắt đầu bằng "User: " hoặc "Gemini: "
         lines = content.split('\n')
         current_role = None
         current_text = []
         for line in lines:
             if line.startswith("User: "):
-                # Lưu message trước đó nếu có
                 if current_role and current_text:
                     conversation_history.append({"role": current_role, "text": " ".join(current_text).strip()})
                 current_role = "user"
@@ -121,10 +114,8 @@ def load_history_from_file():
             else:
                 if current_role and line.strip():
                     current_text.append(line.strip())
-        # Thêm message cuối
         if current_role and current_text:
             conversation_history.append({"role": current_role, "text": " ".join(current_text).strip()})
-        
         print(f"{GREEN}✓ Đã tải {len(conversation_history)//2} lượt hội thoại từ {HISTORY_FILE}{RESET}")
     except Exception as e:
         print(f"{RED}Lỗi tải lịch sử: {e}{RESET}")
@@ -134,7 +125,6 @@ def build_url():
     return f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent?key={API_KEY}"
 
 def convert_history_to_gemini_format():
-    """Chuyển conversation_history (role, text) sang format Gemini API (role, parts)"""
     gemini_msgs = []
     for msg in conversation_history:
         gemini_msgs.append({
@@ -145,7 +135,6 @@ def convert_history_to_gemini_format():
 
 def send_prompt_stream(prompt):
     global conversation_history
-    # Thêm user message
     conversation_history.append({"role": "user", "text": prompt})
     gemini_payload = convert_history_to_gemini_format()
     url = build_url()
@@ -162,7 +151,7 @@ def send_prompt_stream(prompt):
             if resp.status_code != 200:
                 error_data = resp.json()
                 err_msg = error_data.get('error', {}).get('message', 'Unknown error')
-                conversation_history.pop()  # xóa user message vừa thêm
+                conversation_history.pop()
                 return None, f"API Error {resp.status_code}: {err_msg}", 0
 
             for line in resp.iter_lines(decode_unicode=True):
@@ -253,7 +242,6 @@ def show_help():
     print(help_text)
 
 def export_markdown():
-    """Xuất lịch sử ra file markdown đẹp"""
     filename = f"Gemini_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
     try:
         with open(filename, "w", encoding="utf-8") as f:
@@ -267,9 +255,10 @@ def export_markdown():
 
 # ------------------- CHƯƠNG TRÌNH CHÍNH -------------------
 def main():
+    global MODEL  # <--- MÌNH ĐÃ THÊM DÒNG NÀY VÀO ĐẦU HÀM ĐỂ FIX LỖI
     clear_screen()
     print_banner()
-    load_history_from_file()   # tự động load file .txt nếu có
+    load_history_from_file()
 
     try:
         while True:
@@ -318,21 +307,19 @@ def main():
                     else:
                         choice = parts[1]
                         if choice in AVAILABLE_MODELS:
-                            global MODEL
+                            # global MODEL <--- DÒNG CŨ Ở ĐÂY GÂY LỖI NÊN MÌNH ĐÃ XÓA (VÌ CÓ Ở TRÊN RỒI)
                             MODEL = AVAILABLE_MODELS[choice]
                             print(f"{GREEN}✓ Đã chuyển sang model: {MODEL}{RESET}")
                         else:
                             print(f"{RED}Model không hợp lệ. Các lựa chọn: 1,2,3{RESET}")
                     continue
 
-                # Gửi prompt bình thường
                 print(f"\r{DIM}{GREEN}[>] Đang gửi...{RESET}", end="")
                 sys.stdout.flush()
                 answer, info, latency = send_prompt(user_input, use_stream=True)
                 print("\r" + " " * 40 + "\r", end="")
 
                 if answer:
-                    # Vì stream đã in real-time rồi, không cần typewriter nữa
                     if info:
                         print(f"{DIM}{info} | ⏱️ {latency:.2f}s{RESET}")
                     else:
@@ -347,11 +334,9 @@ def main():
             except Exception as e:
                 print(f"\n{RED}Unexpected error: {e}{RESET}")
     finally:
-        # Đảm bảo lưu lịch sử khi thoát khỏi vòng lặp (dù là break hay lỗi)
         if save_history_to_file():
             print(f"{GREEN}✓ Đã tự động lưu lịch sử vào {HISTORY_FILE} khi thoát{RESET}")
         time.sleep(0.5)
 
 if __name__ == "__main__":
     main()
-                                
