@@ -19,10 +19,10 @@ DIM = "\033[2m"
 # để thay bằng menu chọn trực tiếp này.
 # 👇 BẠN HÃY THAY THẾ CÁC CHUỖI 'YOUR_API_KEY_X' DƯỚI ĐÂY BẰNG API KEY THẬT CỦA BẠN 👇
 API_KEYS = {
-    "1": "YOUR_API_KEY_1",
-    "2": "YOUR_API_KEY_2",
-    "3": "YOUR_API_KEY_3",
-    "4": "YOUR_API_KEY_4"
+    "1": "AIzaSyDJvrzMm0sCdpb9EKMQSkl5z6vVXg_8oiI",
+    "2": "AIzaSyAIRCAEyHnhamfcA2Z_9wv9O6xaE1slMh4",
+    "3": "AIzaSyCeRAn6wsiG4L9mUTl-oQSQgRqNRFer2Uk",
+    "4": "AIzaSyCJ1De_8vgoiQwaydUqKp0mSdl8n75HYQ0"
 }
 
 print(f"{GREEN}{BOLD}--- CHỌN API KEY ---{RESET}")
