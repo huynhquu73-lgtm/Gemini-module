@@ -84,8 +84,8 @@ def load_history_from_file():
         conversation_history = []
 
 def build_url():
-    # FIX: đổi v1beta -> v1 (model gemini-1.5-flash hỗ trợ trong v1)
-    return f"https://generativelanguage.googleapis.com/v1/models/{MODEL}:generateContent?key={API_KEY}"
+    # Dùng API v1 (vì v1beta không có gemini-1.5-flash) và thêm alt=sse để stream
+    return f"https://generativelanguage.googleapis.com/v1/models/{MODEL}:generateContent?key={API_KEY}&alt=sse"
 
 def convert_history_to_gemini_format():
     return [{"role": msg["role"], "parts": [{"text": msg["text"]}]} for msg in conversation_history]
@@ -94,9 +94,9 @@ def send_prompt_stream(prompt):
     global conversation_history
     conversation_history.append({"role": "user", "text": prompt})
     gemini_payload = convert_history_to_gemini_format()
-    url = build_url()   # FIX: bỏ &alt=sse
-    headers = {'Content-Type': 'application/json', 'Accept': 'text/event-stream'}  # FIX: thêm header stream
-    payload = {"contents": gemini_payload, "stream": True}   # FIX: thêm stream=True
+    url = build_url()   # URL đã có &alt=sse
+    headers = {'Content-Type': 'application/json'}
+    payload = {"contents": gemini_payload}   # KHÔNG có trường "stream"
     start = time.time()
     full_answer, tokens_info = "", ""
     try:
@@ -135,7 +135,8 @@ def send_prompt_normal(prompt):
     global conversation_history
     conversation_history.append({"role": "user", "text": prompt})
     gemini_payload = convert_history_to_gemini_format()
-    url = build_url()
+    # Normal (non-stream) URL: không có &alt=sse
+    url = f"https://generativelanguage.googleapis.com/v1/models/{MODEL}:generateContent?key={API_KEY}"
     headers = {'Content-Type': 'application/json'}
     payload = {"contents": gemini_payload}
     start = time.time()
@@ -160,10 +161,14 @@ def send_prompt_normal(prompt):
         return None, f"Error: {e}", 0
 
 def send_prompt(prompt, use_stream=True):
-    answer, info, latency = send_prompt_stream(prompt)
-    if answer is None and info and "not support" in info.lower():
+    if use_stream:
+        answer, info, latency = send_prompt_stream(prompt)
+        # Nếu stream thất bại vì lý do gì đó (ví dụ model không support stream), fallback sang normal
+        if answer is None and info and ("not support" in info.lower() or "stream" in info.lower()):
+            return send_prompt_normal(prompt)
+        return answer, info, latency
+    else:
         return send_prompt_normal(prompt)
-    return answer, info, latency
 
 def clear_history():
     global conversation_history
