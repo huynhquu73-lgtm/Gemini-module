@@ -14,12 +14,31 @@ BOLD = "\033[1m"
 RESET = "\033[0m"
 DIM = "\033[2m"
 
-# ------------------- LẤY API KEY -------------------
-API_KEY = os.environ.get("GEMINI_API_KEY")
-if not API_KEY:
-    print(f"{RED}{BOLD}⚠️ LỖI: Chưa thiết lập biến môi trường GEMINI_API_KEY{RESET}")
-    print(f"{YELLOW}👉 Hãy chạy: export GEMINI_API_KEY='your_key_here'{RESET}")
-    sys.exit(1)
+# ------------------- CHỌN API KEY -------------------
+# LƯU Ý: Đoạn lấy API key từ os.environ.get("GEMINI_API_KEY") đã bị lược bỏ 
+# để thay bằng menu chọn trực tiếp này.
+# 👇 BẠN HÃY THAY THẾ CÁC CHUỖI 'YOUR_API_KEY_X' DƯỚI ĐÂY BẰNG API KEY THẬT CỦA BẠN 👇
+API_KEYS = {
+    "1": "YOUR_API_KEY_1",
+    "2": "YOUR_API_KEY_2",
+    "3": "YOUR_API_KEY_3",
+    "4": "YOUR_API_KEY_4"
+}
+
+print(f"{GREEN}{BOLD}--- CHỌN API KEY ---{RESET}")
+print("1. API Key 1")
+print("2. API Key 2")
+print("3. API Key 3")
+print("4. API Key 4")
+
+while True:
+    choice = input(f"{YELLOW}Vui lòng chọn API key (1-4): {RESET}").strip()
+    if choice in API_KEYS:
+        API_KEY = API_KEYS[choice]
+        print(f"{GREEN}✓ Đã chọn API Key {choice}{RESET}\n")
+        break
+    else:
+        print(f"{RED}⚠️ Lựa chọn không hợp lệ. Vui lòng nhập số từ 1 đến 4.{RESET}")
 
 # ------------------- CẤU HÌNH -------------------
 AVAILABLE_MODELS = {
@@ -250,7 +269,7 @@ def export_markdown():
 def main():
     clear_screen()
     print_banner()
-        load_history_from_file()   # tự động load file .txt nếu có
+    load_history_from_file()   # tự động load file .txt nếu có
 
     try:
         while True:
@@ -335,3 +354,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+                                
