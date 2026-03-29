@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # ───────────────────────────────────────────────────────────
-#  GEMINI-CLI  –  giữ nguyên mọi tính năng, bỏ phần chọn key
+#  GEMINI-CLI  –  FIXED for Gemini 2.0+
 # ───────────────────────────────────────────────────────────
 import os, sys, time, json, requests
 from datetime import datetime
@@ -9,13 +9,13 @@ from datetime import datetime
 GREEN = "\033[92m"; RED = "\033[91m"; YELLOW = "\033[93m"
 BOLD = "\033[1m"; RESET = "\033[0m"; DIM = "\033[2m"
 
-#  CẤU HÌNH
-API_KEY          = "AIzaSyDAz-MEPWSgxS0pHhyjbllcmm5LdC5mG90"   # <― duy nhất 1 key
-DEFAULT_MODEL    = "gemini-1.5-flash"
+#  CẤU HÌNH – ĐÃ ĐỔI SANG MODEL 2.0+
+API_KEY          = "AIzaSyDAz-MEPWSgxS0pHhyjbllcmm5LdC5mG90"
+DEFAULT_MODEL    = "gemini-2.0-flash"
 AVAILABLE_MODELS = {
-    "1": "gemini-1.5-flash",
-    "2": "gemini-1.5-pro",
-    "3": "gemini-1.5-flash-8b"
+    "1": "gemini-2.0-flash",
+    "2": "gemini-2.5-pro",
+    "3": "gemini-2.0-flash-lite"
 }
 MODEL            = DEFAULT_MODEL
 HISTORY_FILE     = "conversation_history.txt"
@@ -84,7 +84,6 @@ def load_history_from_file():
         conversation_history = []
 
 def build_url():
-    # Dùng API v1 (vì v1beta không có gemini-1.5-flash) và thêm alt=sse để stream
     return f"https://generativelanguage.googleapis.com/v1/models/{MODEL}:generateContent?key={API_KEY}&alt=sse"
 
 def convert_history_to_gemini_format():
@@ -94,17 +93,17 @@ def send_prompt_stream(prompt):
     global conversation_history
     conversation_history.append({"role": "user", "text": prompt})
     gemini_payload = convert_history_to_gemini_format()
-    url = build_url()   # URL đã có &alt=sse
+    url = build_url()
     headers = {'Content-Type': 'application/json'}
-    payload = {"contents": gemini_payload}   # KHÔNG có trường "stream"
+    payload = {"contents": gemini_payload}
     start = time.time()
     full_answer, tokens_info = "", ""
     try:
         with requests.post(url, headers=headers, json=payload, stream=True, timeout=60) as resp:
             if resp.status_code != 200:
-                err = resp.json().get('error', {}).get('message', 'Unknown error')
+                err_text = resp.text
                 conversation_history.pop()
-                return None, f"API Error {resp.status_code}: {err}", 0
+                return None, f"API Error {resp.status_code}: {err_text[:200]}", 0
             for line in resp.iter_lines(decode_unicode=True):
                 if line and line.startswith("data: "):
                     data = line[6:]
@@ -135,7 +134,6 @@ def send_prompt_normal(prompt):
     global conversation_history
     conversation_history.append({"role": "user", "text": prompt})
     gemini_payload = convert_history_to_gemini_format()
-    # Normal (non-stream) URL: không có &alt=sse
     url = f"https://generativelanguage.googleapis.com/v1/models/{MODEL}:generateContent?key={API_KEY}"
     headers = {'Content-Type': 'application/json'}
     payload = {"contents": gemini_payload}
@@ -163,8 +161,7 @@ def send_prompt_normal(prompt):
 def send_prompt(prompt, use_stream=True):
     if use_stream:
         answer, info, latency = send_prompt_stream(prompt)
-        # Nếu stream thất bại vì lý do gì đó (ví dụ model không support stream), fallback sang normal
-        if answer is None and info and ("not support" in info.lower() or "stream" in info.lower()):
+        if answer is None and info and ("not support" in info.lower() or "404" in info):
             return send_prompt_normal(prompt)
         return answer, info, latency
     else:
@@ -182,7 +179,7 @@ def show_help():
   {GREEN}/save{RESET}           - Lưu lịch sử hiện tại vào file {HISTORY_FILE} (txt)
   {GREEN}/load{RESET}           - Tải lịch sử từ file (ghi đè)
   {GREEN}/model{RESET}          - Xem model đang dùng
-  {GREEN}/model <số>{RESET}     - Đổi model: 1=Flash 1.5, 2=Pro 1.5, 3=Flash 1.5-8b
+  {GREEN}/model <số>{RESET}     - Đổi model: 1=Flash 2.0, 2=Pro 2.5, 3=Flash Lite 2.0
   {GREEN}/history{RESET}        - Hiển thị số lượt hội thoại
   {GREEN}/export{RESET}         - Xuất lịch sử ra file markdown (Gemini_export.md)
   {GREEN}/exit{RESET}           - Thoát (tự động lưu lịch sử)
@@ -218,7 +215,7 @@ def main():
                 if cmd in ['exit', 'thoát', 'quit']:
                     if save_history_to_file():
                         print(f"{GREEN}✓ Đã lưu lịch sử vào {HISTORY_FILE}{RESET}")
-                    print(f"\n{YELLOW}[SYSTEM] Cút con mẹ mày đi...{RESET}")
+                    print(f"\n{YELLOW}[SYSTEM] Tạm biệt!{RESET}")
                     time.sleep(0.5); break
 
                 if cmd == '/clear':
@@ -249,7 +246,7 @@ def main():
                             print(f"{RED}Model không hợp lệ. Các lựa chọn: 1,2,3{RESET}")
                     continue
 
-                print(f"\r{DIM}{GREEN}[>] Đợi bố sủa ít câu...{RESET}", end="")
+                print(f"\r{DIM}{GREEN}[>] Đang gọi Gemini...{RESET}", end="")
                 sys.stdout.flush()
                 answer, info, latency = send_prompt(user_input, use_stream=True)
                 print("\r" + " " * 40 + "\r", end="")
