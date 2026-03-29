@@ -17,9 +17,9 @@ DIM = "\033[2m"
 # ------------------- CHỌN API KEY -------------------
 API_KEYS = {
     "1": "AIzaSyDsf04IDK68UeeFmpE_H1qyCG36b5xQ0Tg",
-    "2": "AIzaSyAIRCAEyHnhamfcA2Z_9wv9O6xaE1slMh4",
-    "3": "AIzaSyCeRAn6wsiG4L9mUTl-oQSQgRqNRFer2Uk",
-    "4": "AIzaSyCJ1De_8vgoiQwaydUqKp0mSdl8n75HYQ0"
+    "2": "AIzaSyDREt8X-c6XNUlYw9EmKWZ4IBm6_BPWkOo",
+    "3": "AIzaSyBk5EzI0KjJUVP9Cx-oPrRXzIMs_SwcXb8",
+    "4": "AIzaSyDMwi5GM7B5HIwAT8uU0AmbGX3dhj3eGvg"
 }
 
 print(f"{GREEN}{BOLD}--- CHỌN API KEY ---{RESET}")
