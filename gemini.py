@@ -10,7 +10,7 @@ GREEN = "\033[92m"; RED = "\033[91m"; YELLOW = "\033[93m"
 BOLD = "\033[1m"; RESET = "\033[0m"; DIM = "\033[2m"
 
 #  CẤU HÌNH
-API_KEY          = "AIzaSyDPqFExNuQH90QiCt4YsnhGZ05fP1PQUjg"   # <― duy nhất 1 key
+API_KEY          = "AIzaSyDAz-MEPWSgxS0pHhyjbllcmm5LdC5mG90"   # <― duy nhất 1 key
 DEFAULT_MODEL    = "gemini-1.5-flash"
 AVAILABLE_MODELS = {
     "1": "gemini-1.5-flash",
@@ -212,7 +212,7 @@ def main():
                 if cmd in ['exit', 'thoát', 'quit']:
                     if save_history_to_file():
                         print(f"{GREEN}✓ Đã lưu lịch sử vào {HISTORY_FILE}{RESET}")
-                    print(f"\n{YELLOW}[SYSTEM] Shutting down...{RESET}")
+                    print(f"\n{YELLOW}[SYSTEM] Cút con mẹ mày đi...{RESET}")
                     time.sleep(0.5); break
 
                 if cmd == '/clear':
@@ -243,7 +243,7 @@ def main():
                             print(f"{RED}Model không hợp lệ. Các lựa chọn: 1,2,3{RESET}")
                     continue
 
-                print(f"\r{DIM}{GREEN}[>] Đang gửi...{RESET}", end="")
+                print(f"\r{DIM}{GREEN}[>] Đợi bố sủa ít câu...{RESET}", end="")
                 sys.stdout.flush()
                 answer, info, latency = send_prompt(user_input, use_stream=True)
                 print("\r" + " " * 40 + "\r", end="")
