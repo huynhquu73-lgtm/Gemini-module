@@ -1,0 +1,15 @@
+# File chứa biến môi trường
+.env
+config.py
+
+# Bytecode Python
+__pycache__/
+*.pyc
+
+# Log và tạm
+*.log
+*.tmp
+
+# Thư mục ảo
+venv/
+env/
