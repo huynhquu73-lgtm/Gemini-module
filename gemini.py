@@ -10,7 +10,7 @@ GREEN = "\033[92m"; RED = "\033[91m"; YELLOW = "\033[93m"
 BOLD = "\033[1m"; RESET = "\033[0m"; DIM = "\033[2m"
 
 #  CẤU HÌNH – DÙNG FLASH-LITE ĐỂ CÓ QUOTA CAO NHẤT
-API_KEY          = "AIzaSyDAz-MEPWSgxS0pHhyjbllcmm5LdC5mG90"
+API_KEY          = "AIzaSyD-lzTJvtCW2jAVd70nnjupr2NnzELoveQ"
 DEFAULT_MODEL    = "gemini-2.5-flash-lite"
 AVAILABLE_MODELS = {
     "1": "gemini-2.5-flash-lite",   # 1000 requests/ngày
